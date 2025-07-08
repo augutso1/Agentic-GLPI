@@ -31,7 +31,7 @@ class Tickets(BaseModel):
     priority: str = Field(default="Média")
     category: Optional[str] = Field(default=None)
     created_at: datetime
-    owner_id: int = Field(default=None)
+    owner: int = Field(default=None)
 
     #Orm
     class Config:
