@@ -1,0 +1,5 @@
+langchain
+openai
+python-dotenv
+pinecone-client
+sentence-transformers
