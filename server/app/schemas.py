@@ -1,3 +1,4 @@
+#Models for the HTTP requests and responses
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -31,7 +32,7 @@ class Tickets(BaseModel):
     priority: str = Field(default="Média")
     category: Optional[str] = Field(default=None)
     created_at: datetime
-    owner: int = Field(default=None)
+    owner_id: int = Field(default=None)
 
     #Orm
     class Config:

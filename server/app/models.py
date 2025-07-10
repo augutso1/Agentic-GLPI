@@ -1,3 +1,4 @@
+#DatabasemModels, with type specification
 import datetime
 from peewee import (Model, CharField, TextField, DateTimeField, ForeignKeyField, IntegerField)
 from .database import db

@@ -4,6 +4,7 @@ from .models import User, Ticket, TicketUpdate
 
 app = FastAPI()
 
+#Main app endpoint
 @app.get("/")
 def read_root():
     return{"message":"Root"}
