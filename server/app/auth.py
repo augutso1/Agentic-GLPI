@@ -22,3 +22,6 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+#TODO Add JWT token verification
+#TODO Create current user dependency function to get user data
