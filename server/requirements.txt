@@ -1,19 +1,20 @@
-# Frameworks de IA e LLM
+# AI &  LLM
 langchain
-openai
+google-generativeai
 sentence-transformers
 pinecone-client
+torch
 
-# Framework Web
+# Web
 fastapi
 uvicorn[standard]
 
-# Banco de Dados e ORM
+# DB/ORM
 sqlalchemy 
 peewee 
 psycopg2-binary
 
-# Utilitários e Autenticação
+# Util/Auth
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]

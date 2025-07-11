@@ -19,6 +19,16 @@ class User(BaseModel):
     class Config:
         from_attributes = True
 
+#Userresponse
+class UserResponse(BaseModel):
+    id: int
+    login: str
+    role: str
+
+    #Orm
+    class Config:
+        from_attributes = True
+
 #Tickets
 class TicketCreate(BaseModel):
     title: str
@@ -32,7 +42,8 @@ class Tickets(BaseModel):
     priority: str = Field(default="Média")
     category: Optional[str] = Field(default=None)
     created_at: datetime
-    owner_id: int = Field(default=None)
+    suggested_solution: Optional[str] = None
+    owner_id: UserResponse
 
     #Orm
     class Config:

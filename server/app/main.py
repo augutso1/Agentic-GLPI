@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from .database import db
 from .models import User, Ticket, TicketUpdate
 from . import models
-from .routers import users, auth
+from .routers import users, auth, tickets
 import logging
 
 logging.getLogger('passlib').setLevel(logging.ERROR)
@@ -11,6 +11,7 @@ app = FastAPI()
 
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(tickets.router)
 
 @app.on_event("startup")
 def startup():

@@ -1,4 +1,4 @@
-#DatabasemModels, with type specification
+#Database Models, with type specification
 import datetime
 from peewee import (Model, CharField, TextField, DateTimeField, ForeignKeyField, IntegerField, AutoField)
 from .database import db
@@ -19,10 +19,11 @@ class Ticket(BaseModel):
     title = CharField()
     description = TextField()
     status = CharField(default='Aberto')
-    priority = CharField(default='Média')
+    priority = CharField(null=True)
     category = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     owner_id = ForeignKeyField(User, backref='tickets')
+    suggested_solution = TextField(null=True)
 
 class TicketUpdate(BaseModel):
     id = AutoField(primary_key=True)
