@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from .. import schemas, models, auth, ai
+import datetime
+from ..config import TicketStatus
 
 router = APIRouter(
     prefix="/tickets",
@@ -43,4 +45,41 @@ def get_ticket(
             status_code = status.HTTP_404_NOT_FOUND,
             detail = "Ticket not found"
         )
+    return ticket
+
+@router.put("/{ticket_id}/assign", response_model=schemas.Tickets)
+def assign_ticket(
+    ticket_id: int,
+    admin: models.User = Depends(auth.admin_required)
+):
+    """Assigns the current logged-in admin to a ticket."""
+    ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.assigned_technician = admin
+    ticket.updated_at = datetime.datetime.now()
+    ticket.save()
+    return ticket
+
+
+@router.put("/{ticket_id}/status", response_model=schemas.Tickets)
+def update_ticket_status(
+    ticket_id: int,
+    new_status: TicketStatus, 
+    admin: models.User = Depends(auth.admin_required)
+):
+    """Updates a ticket's status."""
+    ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    ticket.status = new_status
+    ticket.updated_at = datetime.datetime.now()
+
+    if new_status.lower() == "fechado":
+        admin.tickets_handled += 1
+        admin.save()
+    
+    ticket.save()
     return ticket

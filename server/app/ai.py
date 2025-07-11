@@ -49,19 +49,36 @@ def find_relevant_solutions(ticket_description: str) -> str:
 
 
 def analyze_ticket(title: str, description: str) -> dict:
+
     """
     Analyzes ticket text to determine category, priority, and a suggested solution.
     """
     relevant_solution_context = find_relevant_solutions(description)
 
-    generation_config = {"response_mime_type": "application/json"}
-    model = genai.GenerativeModel("gemini-1.5-flash", generation_config=generation_config)
+    system_prompt = """
+    You are a helpful IT support assistant. 
+    When you are given a user's problem and a potential solution from a knowledge base, 
+    your goal is to provide a clear, step-by-step guide for the user to follow.
+    Your entire response must be a single JSON object.
+    """
 
-    prompt = f"""
+    generation_config = {"response_mime_type": "application/json"}
+    model = genai.GenerativeModel("gemini-2.5-pro", generation_config=generation_config,
+                                  system_instruction = system_prompt)
+
+    priorities = ["Baixa", "Média", "Alta", "Urgente"]
+
+    categories = ["Hardware", "Software", "Segurança", "Rede", "Outro"]
+
+    user_prompt = f"""
     Analyze the support ticket below. Your response MUST be a single JSON object containing three keys: "category", "priority", and "suggested_solution".
 
-    - "category" must be one of: "Technical Issue", "Billing", "General Inquiry".
-    - "priority" must be one of: "Low", "Medium", "High".
+    - Your most important task is to analyze the "Context Solution". It may contain several methods. 
+    - Based on the user's "Ticket Description", identify the *single most relevant step or method* from the context and use only that for the "suggested_solution".
+    - For example, if the user mentions an IP address, only explain the TCP/IP method, not the others.
+
+    - "category" must be one of: {categories}.
+    - "priority" must be one of: {priorities}.
     - "suggested_solution" must be a helpful response. If the provided "Context Solution" is relevant, adapt it. Otherwise, create a new one.
 
     Context Solution: "{relevant_solution_context}"
@@ -71,7 +88,7 @@ def analyze_ticket(title: str, description: str) -> dict:
     """
 
     try:
-        response = model.generate_content(prompt)
+        response = model.generate_content(user_prompt)
         result = json.loads(response.text)
         return {
             "category": result["category"],
@@ -85,3 +102,5 @@ def analyze_ticket(title: str, description: str) -> dict:
             "priority": None,
             "suggested_solution": "AI analysis failed. Please classify manually."
         }
+
+#TODO externalize the user and system prompts for better comprehension and distinction between code and prompt

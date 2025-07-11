@@ -4,6 +4,10 @@ from typing import Optional
 from datetime import datetime
 
 #Users
+class UserBase(BaseModel):
+    login: str
+    role: str
+
 class UserCreate(BaseModel):
     login: str
     password: str
@@ -33,6 +37,7 @@ class UserResponse(BaseModel):
 class TicketCreate(BaseModel):
     title: str
     description: str
+    department: Optional[str] = None
 
 class Tickets(BaseModel):
     id: int
@@ -41,9 +46,12 @@ class Tickets(BaseModel):
     status: str = Field(default="Aberto")
     priority: str = Field(default="Média")
     category: Optional[str] = Field(default=None)
+    department: Optional[str]
     created_at: datetime
+    updated_at: datetime
     suggested_solution: Optional[str] = None
     owner_id: UserResponse
+    assigned_technician_id: Optional[int] = None
 
     #Orm
     class Config:
