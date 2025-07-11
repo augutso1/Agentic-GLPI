@@ -1,6 +1,8 @@
 #User object
 from fastapi import APIRouter, HTTPException
 from .. import schemas, models, auth
+from fastapi import Depends
+from .. import auth
 
 router = APIRouter(
     prefix="/users",
@@ -21,3 +23,7 @@ def create_user(user: schemas.UserCreate):
         role = user.role
     )
     return new_user
+
+@router.get("/me", response_model=schemas.User)
+def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
+    return current_user

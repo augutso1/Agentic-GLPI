@@ -52,3 +52,6 @@ class TicketUpdate(BaseModel):
     #Orm
     class Config:
         from_attributes = True
+
+class TokenData(BaseModel):
+    id: Optional[int] = None
