@@ -1,6 +1,6 @@
 #DatabasemModels, with type specification
 import datetime
-from peewee import (Model, CharField, TextField, DateTimeField, ForeignKeyField, IntegerField)
+from peewee import (Model, CharField, TextField, DateTimeField, ForeignKeyField, IntegerField, AutoField)
 from .database import db
 
 class BaseModel(Model):
@@ -8,14 +8,14 @@ class BaseModel(Model):
         database = db
 
 class User(BaseModel):
-    id = IntegerField(primary_key=True)
+    id = AutoField(primary_key=True)
     login = CharField(unique=True)
     password = CharField()
     role = CharField(default='user')
     created_at = DateTimeField(default=datetime.datetime.now)
 
 class Ticket(BaseModel):
-    id =  IntegerField(primary_key=True)
+    id =  AutoField(primary_key=True)
     title = CharField()
     description = TextField()
     status = CharField(default='Aberto')
@@ -25,7 +25,7 @@ class Ticket(BaseModel):
     owner_id = ForeignKeyField(User, backref='tickets')
 
 class TicketUpdate(BaseModel):
-    id = IntegerField(primary_key=True)
+    id = AutoField(primary_key=True)
     comment = TextField()
     created_at= DateTimeField(default=datetime.datetime.now)
     ticket_id = ForeignKeyField(Ticket, backref='updates')

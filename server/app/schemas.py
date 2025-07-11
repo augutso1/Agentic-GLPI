@@ -17,7 +17,7 @@ class User(BaseModel):
 
     #Orm
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 #Tickets
 class TicketCreate(BaseModel):
@@ -36,7 +36,7 @@ class Tickets(BaseModel):
 
     #Orm
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 #Updates
 class TicketUpdateCreate(BaseModel):
@@ -51,4 +51,4 @@ class TicketUpdate(BaseModel):
     
     #Orm
     class Config:
-        orm_mode = True
+        from_attributes = True

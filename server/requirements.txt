@@ -1,16 +1,19 @@
+# Frameworks de IA e LLM
 langchain
 openai
-python-dotenv
-pinecone-client
 sentence-transformers
+pinecone-client
+
+# Framework Web
 fastapi
 uvicorn[standard]
-sqlalchemy
+
+# Banco de Dados e ORM
+sqlalchemy 
+peewee 
 psycopg2-binary
+
+# Utilitários e Autenticação
 python-dotenv
 passlib[bcrypt]
 python-jose[cryptography]
-peewee
-psycopg2-binary
-passlib
-bcrypt
