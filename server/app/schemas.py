@@ -23,7 +23,7 @@ class User(BaseModel):
     class Config:
         from_attributes = True
 
-#Userresponse
+#User response
 class UserResponse(BaseModel):
     id: int
     login: str
@@ -50,8 +50,10 @@ class Tickets(BaseModel):
     created_at: datetime
     updated_at: datetime
     suggested_solution: Optional[str] = None
-    owner_id: UserResponse
-    assigned_technician_id: Optional[int] = None
+    # The user that opened the ticket
+    owner: UserResponse
+    # The technician currently assigned to handle the ticket
+    assigned_technician: Optional[UserResponse] = None
 
     #Orm
     class Config:

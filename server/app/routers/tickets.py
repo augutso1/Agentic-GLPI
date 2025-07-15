@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
+from typing import List, Optional
 from .. import schemas, models, auth, ai
 import datetime
 from ..config import TicketStatus
+from ..auth import admin_required
 
 router = APIRouter(
     prefix="/tickets",
@@ -14,10 +15,11 @@ def create_ticket(
     ticket: schemas.TicketCreate,
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    
     new_ticket = models.Ticket.create(
         title = ticket.title,
         description = ticket.description,
-        owner_id = current_user.id
+        owner = current_user
     )
 
     analysis = ai.analyze_ticket(new_ticket.title, new_ticket.description)
@@ -37,14 +39,23 @@ def get_tickets(current_user: models.User = Depends(auth.get_current_user)):
 def get_ticket(
     ticket_id: int,
     current_user: models.User = Depends(auth.get_current_user)):
-    
+
+    print(current_user)
+
     ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
 
-    if not ticket or ticket.owner_id != current_user.id:
+    if not ticket:        
         raise HTTPException(
             status_code = status.HTTP_404_NOT_FOUND,
-            detail = "Ticket not found"
+            detail = "Ticket not found",
         )
+
+    if current_user.role != "admin" and ticket.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Permission denied"
+        )
+    
     return ticket
 
 @router.put("/{ticket_id}/assign", response_model=schemas.Tickets)
@@ -52,7 +63,7 @@ def assign_ticket(
     ticket_id: int,
     admin: models.User = Depends(auth.admin_required)
 ):
-    """Assigns the current logged-in admin to a ticket."""
+    
     ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")

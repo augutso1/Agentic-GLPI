@@ -26,7 +26,7 @@ class Ticket(BaseModel):
     department = CharField(null=True)
     created_at = DateTimeField(default=datetime.datetime.now)
     updated_at = DateTimeField(default=datetime.datetime.now)
-    owner_id = ForeignKeyField(User, backref='tickets')
+    owner = ForeignKeyField(User, backref='tickets')
     assigned_technician = ForeignKeyField(User, backref='assigned_tickets', null=True)
     suggested_solution = TextField(null=True)
 
