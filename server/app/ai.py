@@ -2,6 +2,7 @@ import os
 import json
 import google.generativeai as genai
 from sentence_transformers import SentenceTransformer, util
+from . import prompts
 
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -12,7 +13,6 @@ retrieval_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 
 def get_knowledge_base() -> list:
-    """Parses the knowledge base file into a list of problem/solution dicts."""
     try:
         with open("app/knowledge_base.txt", "r", encoding="utf-8") as f:
             content = f.read()
@@ -32,7 +32,6 @@ problem_embeddings = retrieval_model.encode([entry["problem"] for entry in knowl
 
 
 def find_relevant_solutions(ticket_description: str) -> str:
-    """Finds the most relevant solution using semantic search."""
     if not knowledge_base:
         return ""
 
@@ -47,45 +46,43 @@ def find_relevant_solutions(ticket_description: str) -> str:
     else:
         return ""
 
+def get_solutions_suggestions(query: str, top_k: int = 3) -> list:
+    if not knowledge_base or not query.strip():
+        return []
+    
+    query_embedding = retrieval_model.encode(query, convert_to_tensor=True)
+
+    cosine_scores = util.cos_sim(query_embedding, problem_embeddings)
+
+    top_results  = cosine_scores[0].topk(top_k)
+
+    suggestions = []
+
+    for score, idx in zip(top_results.values, top_results.indices):
+            suggestions.append(knowledge_base[idx])
+
+    return suggestions
 
 def analyze_ticket(title: str, description: str) -> dict:
 
-    """
-    Analyzes ticket text to determine category, priority, and a suggested solution.
-    """
     relevant_solution_context = find_relevant_solutions(description)
 
-    system_prompt = """
-    You are a helpful IT support assistant. 
-    When you are given a user's problem and a potential solution from a knowledge base, 
-    your goal is to provide a clear, step-by-step guide for the user to follow.
-    Your entire response must be a single JSON object.
-    """
+    system_prompt = prompts.SYSTEM_PROMPT
 
     generation_config = {"response_mime_type": "application/json"}
-    model = genai.GenerativeModel("gemini-2.5-pro", generation_config=generation_config,
-                                  system_instruction = system_prompt)
+    model = genai.GenerativeModel("gemini-2.5-pro", generation_config=generation_config, system_instruction = system_prompt)
 
     priorities = ["Baixa", "Média", "Alta", "Urgente"]
 
     categories = ["Hardware", "Software", "Segurança", "Rede", "Outro"]
 
-    user_prompt = f"""
-    Analyze the support ticket below. Your response MUST be a single JSON object containing three keys: "category", "priority", and "suggested_solution".
-
-    - Your most important task is to analyze the "Context Solution". It may contain several methods. 
-    - Based on the user's "Ticket Description", identify the *single most relevant step or method* from the context and use only that for the "suggested_solution".
-    - For example, if the user mentions an IP address, only explain the TCP/IP method, not the others.
-
-    - "category" must be one of: {categories}.
-    - "priority" must be one of: {priorities}.
-    - "suggested_solution" must be a helpful response. If the provided "Context Solution" is relevant, adapt it. Otherwise, create a new one.
-
-    Context Solution: "{relevant_solution_context}"
-
-    Ticket Title: "{title}"
-    Ticket Description: "{description}"
-    """
+    user_prompt = prompts.USER_PROMPT_TEMPLATE.format(
+        categories=categories,
+        priorities=priorities,
+        context_solution=relevant_solution_context,
+        title=title,
+        description=description,
+    )
 
     try:
         response = model.generate_content(user_prompt)
@@ -102,5 +99,3 @@ def analyze_ticket(title: str, description: str) -> dict:
             "priority": None,
             "suggested_solution": "AI analysis failed. Please classify manually."
         }
-
-#TODO externalize the user and system prompts for better comprehension and distinction between code and prompt

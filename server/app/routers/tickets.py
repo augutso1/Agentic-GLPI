@@ -3,7 +3,6 @@ from typing import List, Optional
 from .. import schemas, models, auth, ai
 import datetime
 from ..config import TicketStatus
-from ..auth import admin_required
 
 router = APIRouter(
     prefix="/tickets",
@@ -61,14 +60,21 @@ def get_ticket(
 @router.put("/{ticket_id}/assign", response_model=schemas.Tickets)
 def assign_ticket(
     ticket_id: int,
-    admin: models.User = Depends(auth.admin_required)
+    assignment_data: schemas.TicketAssignment,
+    _: models.User = Depends(auth.admin_required)
 ):
     
     ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
-    ticket.assigned_technician = admin
+    technician_to_assign = models.User.get_or_none(models.User.id == assignment_data.
+    technician_id)
+
+    if not technician_to_assign or technician_to_assign.role.strip().lower() != 'admin':
+        raise HTTPException(status_code=404, detail="Technician not found or user is not an admin")
+
+    ticket.assigned_technician = technician_to_assign
     ticket.updated_at = datetime.datetime.now()
     ticket.save()
     return ticket
@@ -80,7 +86,6 @@ def update_ticket_status(
     new_status: TicketStatus, 
     admin: models.User = Depends(auth.admin_required)
 ):
-    """Updates a ticket's status."""
     ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -94,3 +99,59 @@ def update_ticket_status(
     
     ticket.save()
     return ticket
+
+@router.get("/admin/all", response_model=List[schemas.Tickets])
+def get_all_tickets_admin(admin: models.User = Depends(auth.admin_required)):
+    return list(models.Ticket.select())
+
+@router.get("/admin/{ticket_id}", response_model=schemas.Tickets)
+def get_single_ticket_admin(
+    ticket_id: int,
+    admin: models.User = Depends(auth.admin_required)
+):
+    ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket
+
+@router.put("/admin/{ticket_id}", response_model=schemas.Tickets)
+def update_ticket_admin(
+        ticket_id: int,
+        update_data: schemas.TicketUpdateAdmin,
+        admin: models.User = Depends(auth.admin_required)
+):
+
+    ticket = models.Ticket.get_or_none(models.Ticket.id == ticket_id)
+    if not ticket:
+        raise HTTPException(
+            status_code = 404,
+            detail="Ticket not found"
+        )
+    
+    if update_data.description is not None:
+        ticket.description = update_data.description
+    if update_data.status is not None:
+        ticket.status = update_data.status.value
+    if update_data.assigned_technician is not None:
+        technician = models.User.get_or_none(models.User.id == update_data.assigned_technician)
+        if not technician or technician.role.strip().lower() != 'admin':
+            raise HTTPException(
+                status_code = 404,
+                detail = "Technician to assign not found or is not an admin"
+            )
+        ticket.assigned_technician = technician
+    if update_data.comment:
+        models.TicketUpdate.create(
+            comment=update_data.comment,
+            author_id=admin.id,
+            ticket_id=ticket.id
+        )
+
+    ticket.updated_at = datetime.datetime.now()
+    ticket.save()
+
+    return ticket
+
+@router.get("/admin/technicians", response_model=List[schemas.User])
+def get_all_technicians(admin: models.User = Depends(auth.admin_required)):
+    return list(models.User.select().where(models.User.role == 'admin'))

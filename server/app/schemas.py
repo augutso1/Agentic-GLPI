@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from .config import TicketStatus
 
 #Users
 class UserBase(BaseModel):
@@ -50,9 +51,7 @@ class Tickets(BaseModel):
     created_at: datetime
     updated_at: datetime
     suggested_solution: Optional[str] = None
-    # The user that opened the ticket
     owner: UserResponse
-    # The technician currently assigned to handle the ticket
     assigned_technician: Optional[UserResponse] = None
 
     #Orm
@@ -70,9 +69,24 @@ class TicketUpdate(BaseModel):
     ticket_id: int
     author_id: str
     
+class TicketAssignment(BaseModel):
+    technician_id: int
+
     #Orm
     class Config:
         from_attributes = True
 
 class TokenData(BaseModel):
     id: Optional[int] = None
+
+#Suggestion
+class KnowledgeBaseEntry(BaseModel):
+    problem: str
+    solution: str
+
+#Ticket update info
+class TicketUpdateAdmin(BaseModel):
+    description: Optional[str] = None
+    status: Optional[TicketStatus] = None
+    assigned_technician: Optional[int] = None
+    comment: Optional[str] = None
